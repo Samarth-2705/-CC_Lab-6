@@ -16,13 +16,23 @@ pipeline {
             }
         }
         stage('Deploy NGINX') {
-            steps {
-                sh '''
-                docker rm -f nginx-lb || true
-                docker run -d --name nginx-lb -p 80:80 \
-                -v $(pwd)/CC_LAB-6/nginx/etc/nginx/conf.d:/etc/nginx/conf.d:ro \
-                nginx
-                '''
+                steps {
+                    sh '''
+                    # Remove old container if it exists
+                    docker rm -f nginx-lb || true
+
+                    # 1. Start Nginx WITHOUT the volume mount (this fixes the error)
+                    docker run -d --name nginx-lb -p 80:80 nginx
+
+                    # 2. Copy the config file from Jenkins workspace to the Container
+                    # (This sends the file content directly, bypassing host path issues)
+                    docker cp CC_LAB-6/nginx/default.conf nginx-lb:/etc/nginx/conf.d/default.conf
+
+                    # 3. Reload Nginx so it uses the new config
+                    docker exec nginx-lb nginx -s reload
+                    '''
+                }
+            }
             }
         }
     }
