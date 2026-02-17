@@ -21,14 +21,13 @@ pipeline {
                 # Remove old container if it exists
                 docker rm -f nginx-lb || true
 
-                # 1. Start Nginx WITHOUT the volume mount first
+                # 1. Start Nginx
                 docker run -d --name nginx-lb -p 80:80 nginx
 
-                # 2. Copy the config file from Jenkins workspace to the Container
-                # (We use the full path seen in your logs to be safe)
-                docker cp CC_LAB-6/nginx/etc/nginx/conf.d/default.conf nginx-lb:/etc/nginx/conf.d/default.conf
+                # 2. Copy the config file (Using the simpler path)
+                docker cp CC_LAB-6/nginx/default.conf nginx-lb:/etc/nginx/conf.d/default.conf
 
-                # 3. Reload Nginx so it uses the new config
+                # 3. Reload Nginx
                 docker exec nginx-lb nginx -s reload
                 '''
             }
