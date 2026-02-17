@@ -9,23 +9,23 @@ pipeline {
         stage('Deploy Backends') {
             steps {
                 sh '''
-                # Remove new containers if they exist
+                # Remove containers if they exist
                 docker rm -f backend1-new backend2-new || true
                 
-                # Run with NEW names to bypass the stuck ones
-                docker run -d --name backend1-new backend-app
-                docker run -d --name backend2-new backend-app
+                # Run with Network Attached
+                docker run -d --name backend1-new --network lab6-net backend-app
+                docker run -d --name backend2-new --network lab6-net backend-app
                 '''
             }
         }
         stage('Deploy NGINX') {
             steps {
                 sh '''
-                # Remove new LB if it exists
+                # Remove LB if it exists
                 docker rm -f nginx-lb-new || true
 
-                # 1. Start Nginx with NEW name
-                docker run -d --name nginx-lb-new -p 80:80 nginx
+                # 1. Start Nginx on the SAME network
+                docker run -d --name nginx-lb-new --network lab6-net -p 80:80 nginx
 
                 # 2. Copy the config file
                 docker cp CC_LAB-6/nginx/default.conf nginx-lb-new:/etc/nginx/conf.d/default.conf
