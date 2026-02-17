@@ -9,26 +9,29 @@ pipeline {
         stage('Deploy Backends') {
             steps {
                 sh '''
-                docker rm -f backend1 backend2 || true
-                docker run -d --name backend1 backend-app
-                docker run -d --name backend2 backend-app
+                # Remove new containers if they exist
+                docker rm -f backend1-new backend2-new || true
+                
+                # Run with NEW names to bypass the stuck ones
+                docker run -d --name backend1-new backend-app
+                docker run -d --name backend2-new backend-app
                 '''
             }
         }
         stage('Deploy NGINX') {
             steps {
                 sh '''
-                # Remove old container if it exists
-                docker rm -f nginx-lb || true
+                # Remove new LB if it exists
+                docker rm -f nginx-lb-new || true
 
-                # 1. Start Nginx
-                docker run -d --name nginx-lb -p 80:80 nginx
+                # 1. Start Nginx with NEW name
+                docker run -d --name nginx-lb-new -p 80:80 nginx
 
-                # 2. Copy the config file (Using the simpler path)
-                docker cp CC_LAB-6/nginx/default.conf nginx-lb:/etc/nginx/conf.d/default.conf
+                # 2. Copy the config file
+                docker cp CC_LAB-6/nginx/default.conf nginx-lb-new:/etc/nginx/conf.d/default.conf
 
                 # 3. Reload Nginx
-                docker exec nginx-lb nginx -s reload
+                docker exec nginx-lb-new nginx -s reload
                 '''
             }
         }
